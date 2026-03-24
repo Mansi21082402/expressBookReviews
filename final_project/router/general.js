@@ -1,63 +1,48 @@
 const express = require('express');
 const axios = require('axios');
-let books = require('./booksdb.js'); // still keep local data for reviews
+let books = require("./booksdb.js");
 const public_users = express.Router();
 
-// Get book by ISBN using Axios + async/await
-public_users.get('/isbn/:isbn', async (req, res) => {
+// Get all books
+public_users.get('/', async (req, res) => {
     try {
-        const isbn = req.params.isbn;
-        const response = await axios.get(`https://openlibrary.org/isbn/${isbn}.json`);
-        
-        if (response.data) {
-            return res.json(response.data);
-        } else {
-            return res.status(404).json({ message: "Book not found" });
-        }
+        const response = await axios.get('http://localhost:5000/books');
+        res.send(response.data);
     } catch (err) {
-        return res.status(500).json({ message: err.message });
+        res.status(500).send({ error: err.message });
     }
 });
 
-// Get books by author using Axios + async/await
+// Get books by author
 public_users.get('/author/:author', async (req, res) => {
     try {
         const author = req.params.author;
-        const response = await axios.get(`https://openlibrary.org/search.json?author=${author}`);
-        
-        if (response.data.docs.length > 0) {
-            return res.json(response.data.docs);
-        } else {
-            return res.status(404).json({ message: "No books found for this author" });
-        }
+        const response = await axios.get(`http://localhost:5000/books/author/${author}`);
+        res.send(response.data);
     } catch (err) {
-        return res.status(500).json({ message: err.message });
+        res.status(500).send({ error: err.message });
     }
 });
 
-// Get books by title using Axios + async/await
+// Get books by title
 public_users.get('/title/:title', async (req, res) => {
     try {
         const title = req.params.title;
-        const response = await axios.get(`https://openlibrary.org/search.json?title=${title}`);
-        
-        if (response.data.docs.length > 0) {
-            return res.json(response.data.docs);
-        } else {
-            return res.status(404).json({ message: "No books found with this title" });
-        }
+        const response = await axios.get(`http://localhost:5000/books/title/${title}`);
+        res.send(response.data);
     } catch (err) {
-        return res.status(500).json({ message: err.message });
+        res.status(500).send({ error: err.message });
     }
 });
 
-// Get book review (still from local data)
-public_users.get('/review/:isbn', (req, res) => {
-    const isbn = req.params.isbn;
-    if (books[isbn]) {
-        return res.json(books[isbn].reviews);
-    } else {
-        return res.status(404).json({ message: "Book not found" });
+// Get books by ISBN
+public_users.get('/isbn/:isbn', async (req, res) => {
+    try {
+        const isbn = req.params.isbn;
+        const response = await axios.get(`http://localhost:5000/books/isbn/${isbn}`);
+        res.send(response.data);
+    } catch (err) {
+        res.status(500).send({ error: err.message });
     }
 });
 
