@@ -1,16 +1,16 @@
 const express = require('express');
 const axios = require('axios');
-let books = require('./booksdb.js'); // local data
+let books = require('./booksdb.js'); // still keep local data for reviews
 const public_users = express.Router();
 
-// Example: Get book by ISBN using async/await
+// Get book by ISBN using Axios + async/await
 public_users.get('/isbn/:isbn', async (req, res) => {
     try {
         const isbn = req.params.isbn;
-        if (books[isbn]) {
-            // Simulate an async call
-            const data = await new Promise(resolve => resolve(books[isbn]));
-            return res.json(data);
+        const response = await axios.get(`https://openlibrary.org/isbn/${isbn}.json`);
+        
+        if (response.data) {
+            return res.json(response.data);
         } else {
             return res.status(404).json({ message: "Book not found" });
         }
@@ -19,46 +19,41 @@ public_users.get('/isbn/:isbn', async (req, res) => {
     }
 });
 
-// Example: Get books by author using async/await
+// Get books by author using Axios + async/await
 public_users.get('/author/:author', async (req, res) => {
     try {
-        const author = req.params.author.toLowerCase();
-        const result = {};
-        for (const [isbn, book] of Object.entries(books)) {
-            if (book.author.toLowerCase() === author) {
-                result[isbn] = book;
-            }
+        const author = req.params.author;
+        const response = await axios.get(`https://openlibrary.org/search.json?author=${author}`);
+        
+        if (response.data.docs.length > 0) {
+            return res.json(response.data.docs);
+        } else {
+            return res.status(404).json({ message: "No books found for this author" });
         }
-        const data = await new Promise(resolve => resolve(result));
-        return res.json(data);
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
 });
 
-// Example: Get books by title using async/await
+// Get books by title using Axios + async/await
 public_users.get('/title/:title', async (req, res) => {
     try {
-        const title = req.params.title.toLowerCase();
-        const result = {};
-        for (const [isbn, book] of Object.entries(books)) {
-            if (book.title.toLowerCase() === title) {
-                result[isbn] = book;
-            }
+        const title = req.params.title;
+        const response = await axios.get(`https://openlibrary.org/search.json?title=${title}`);
+        
+        if (response.data.docs.length > 0) {
+            return res.json(response.data.docs);
+        } else {
+            return res.status(404).json({ message: "No books found with this title" });
         }
-        const data = await new Promise(resolve => resolve(result));
-        return res.json(data);
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
 });
 
-module.exports.general = public_users;
-
-//  Get book review
-public_users.get('/review/:isbn',function (req, res) {
-  //Write your code here
-  const isbn = req.params.isbn;
+// Get book review (still from local data)
+public_users.get('/review/:isbn', (req, res) => {
+    const isbn = req.params.isbn;
     if (books[isbn]) {
         return res.json(books[isbn].reviews);
     } else {
